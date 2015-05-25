@@ -1,0 +1,86 @@
+<html>
+<head>
+    <title>PyPy.js - Mandelbrot - without PyPy JIT</title>
+    <style>
+    button {
+        display:none;
+    }
+    pre {
+        width: 90%;
+        height: 20%;
+        margin: 1em;
+        padding: 1em;
+        border: 5px solid #ddd;
+        overflow: auto;
+    }
+    </style>
+</head>
+<body>
+    <h1>PyPy.js - Mandelbrot - without PyPy JIT</h1>
+    <p>
+        Render Mandelbrot fractal with <a href="http://pypyjs.org">PyPy.js</a>
+    </p>
+    <a href="https://github.com/jedie/pypyjs-examples"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
+    <noscript><h3>Please enable JavaScript for using PyPy.js</h3></noscript>
+    <pre id="output"></pre>
+    <hr />
+    <p>
+        PyPy.js is an experiment in building a fast and compliant python environment for the web.
+    <br/>
+        It uses the <a href="http://pypy.org/">PyPy</a> python interpreter, compiled for the web via
+        <a href="http://emscripten.org">emscripten</a>, with a custom JIT backend that emits <a href="http://asmjs.org">asm.js</a>
+        code at runtime.
+    </p>
+</div>
+<script src="pypyjs-source/pypyjs-nojit/lib/Promise.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="pypyjs-source/pypyjs-nojit/lib/FunctionPromise.js" type="text/javascript" charset="utf-8"></script>
+<script src="pypyjs-source/pypyjs-nojit/lib/pypy.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<script type="text/javascript" charset="utf-8">
+try {
+    jQuery(document);
+} catch (e) {
+    alert("Error, jQuery JS not loaded!\n Original error was:" + e);
+}
+function console_exec(code) {
+    vm.exec(code).then(function() {
+        console.log("OK");
+    }, function (err) {
+        // err is an instance of PyPyJS.Error
+        console.log("ERROR: "+err.name+": "+err.message+"!)");
+        vm.stderr(err.trace); // the human-readable traceback, as a string
+    });
+}
+$(document).ready(function() {
+    try {
+       window.vm = new PyPyJS();
+    } catch (e) {
+        alert("Error, pypy.js not loaded!\n Original error was:" + e);
+    }
+    out = $("#output");
+    vm.stdout = vm.stderr = function(data) {
+        out.append(data);
+        out.scrollTop(out.prop("scrollHeight")); // scoll down
+    }
+    vm.stdout.reset = vm.stderr.reset = function(data) {
+        out.empty();
+    }
+
+    vm.stdout("loading PyPy.js...");
+    vm.ready.then(function() {
+        vm.stdout.reset();
+
+        vm.stdout("load 'mandelbrot.py'...");
+        $.get( "mandelbrot.py", function( data ) {
+            console_exec( data );
+        }).done(function() {
+            vm.stdout("OK\n");
+        }).fail(function() {
+            vm.stderr("error!");
+        });
+    });
+});
+</script>
+</body>
+</html>

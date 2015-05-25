@@ -8,15 +8,20 @@ It used the git repro https://github.com/jedie/pypyjs-source as a git submodule.
 
 ==== Existing examples:
 
-* [[https://jedie.github.io/pypyjs-examples/mandelbrot.html|/mandelbrot.html]]
+===== Mandelbrot
 
 Render Mandelbrot fractal in browser via PyPy.js
 
+* [[https://jedie.github.io/pypyjs-examples/mandelbrot.html|/mandelbrot.html]]
+* [[https://jedie.github.io/pypyjs-examples/mandelbrot-nojit.html|/mandelbrot-nojit.html]] (without PyPy JIT)
 
-* [[https://jedie.github.io/pypyjs-examples/minimal_console.html|/minimal_console.html]]
+
+===== minimal console
 
 A minimal console with the aim to use as few external dependencies.
 A full featured console, that used **jq-console** is here: [[http://pypyjs.org|pypyjs.org]]
+
+* [[https://jedie.github.io/pypyjs-examples/minimal_console.html|/minimal_console.html]]
 
 
 ==== try out at home
