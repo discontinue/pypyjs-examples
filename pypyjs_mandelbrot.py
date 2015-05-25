@@ -1,0 +1,125 @@
+from __future__ import absolute_import, print_function
+
+import time
+
+import js
+
+
+class Canvas(object):
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+        self.canvas = self.create_canvas()
+        self.context = self.canvas.getContext('2d')
+
+        self.pixel = self.context.createImageData(1, 1)
+        self.pixel_data = self.pixel.data
+
+    def create_canvas(self):
+        jquery = js.globals["$"]
+
+        canvas = jquery("#canvasMandelbrot")[0] # Maybe started in the past?
+        # if canvas == js.Undefined:
+        if repr(canvas) == "<js.Undefined>":
+            console = jquery("#console")
+            console.before("""
+                <canvas id="canvasMandelbrot" width="%i" height="%i"></canvas>
+            """ % (self.width, self.height))
+            canvas = jquery("#canvasMandelbrot")[0]
+        return canvas
+
+    def draw_pixel(self, x, y, r, g, b, alpha=255):
+        self.context.fillStyle = 'rgba(%i,%i,%i,%i)' % (r, g, b, alpha)
+        self.context.fillRect(x, y, 1, 1)
+
+
+class Mandelbrot(object):
+    def __init__(self, canvas, left, right, top, bottom, iterations):
+        self.canvas = canvas
+        self.left = left
+        self.right = right
+        self.top = top
+        self.bottom = bottom
+        self.iterations = iterations
+
+        self.width = self.canvas.width
+        self.height = self.canvas.height
+
+        self.y = 0
+        self.start_time = time.time()
+        self.next_update = time.time() + 1
+        self.last_pos = 0
+
+    def render_mandelbrot_line(self):
+        self.y += 1
+        if self.y >= self.height:
+            duration = time.time() - self.start_time
+            msg = "%ix%ipx Rendered in %iSec." % (self.width, self.height, duration)
+            print(msg)
+            jquery = js.globals["$"]
+            jquery("#run_info").text(msg)
+            return False # stop recall
+
+        for x in range(self.width):
+            z = complex(0, 0)
+            c = complex(
+                self.left + x * (self.right - self.left) / self.width,
+                self.top + self.y * (self.bottom - self.top) / self.height
+            )
+            norm = abs(z) ** 2
+            for count in xrange(self.iterations):
+                if norm <= 4.0:
+                    z = z * z + c
+                    norm = abs(z * z)
+                else:
+                    break
+
+            if count <= 4:
+                (r, g, b) = (128, 128, 128) # grey
+            elif count <= 8:
+                (r, g, b) = (0, 255, 0) # green
+            elif count <= 10:
+                (r, g, b) = (0, 0, 255) # blue
+            elif count <= 12:
+                (r, g, b) = (255, 0, 0) # red
+            elif count <= 15:
+                (r, g, b) = (255, 255, 0) # yellow
+            else:
+                (r, g, b) = (0, 0, 0) # black
+
+            (r, g, b) = (count * 6, 0, 0)
+
+            canvas.draw_pixel(x, self.y, r, g, b)
+
+        if time.time() > self.next_update:
+            pos = (self.y * self.width)
+            pos_diff = pos - self.last_pos
+            print("%i Pixel/sec." % pos_diff)
+            self.last_pos = pos
+            self.next_update = time.time() + 1
+
+        return True # not complete rendered, yet
+
+
+if __name__ == "__main__":
+    width = 640
+    height = 480
+
+    canvas = Canvas(width, height)
+    mandelbrot = Mandelbrot(
+        canvas,
+        left=-2,
+        right=0.5,
+        top=1.25,
+        bottom=-1.25,
+        iterations=40,
+    )
+
+    @js.Function
+    def render_line():
+        check = mandelbrot.render_mandelbrot_line()
+        if check:
+            js.globals.setTimeout(render_line, 0)
+
+    render_line()
