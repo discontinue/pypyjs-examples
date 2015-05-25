@@ -1,0 +1,3 @@
+[submodule "pypyjs-source"]
+	path = pypyjs-source
+	url = https://github.com/jedie/pypyjs-source.git
