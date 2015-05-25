@@ -19,6 +19,20 @@ A minimal console with the aim to use as few external dependencies.
 A full featured console, that used **jq-console** is here: [[http://pypyjs.org|pypyjs.org]]
 
 
+==== try out at home
+
+There is a [[https://jedie.github.io/pypyjs-examples/simple_http_server.py|/simple_http_server.py]] for test this repro at home.
+
+This is needed for 'mandelbrot' example and you can better see file requests.
+
+Just do it e.g.:
+{{{
+~$ cd pypyjs-examples
+~/pypyjs-examples$ python simple_http_server.py
+}}}
+The server worked with Python 2 and 3 and starts at [[http://127.0.0.1:8000]].
+
+
 === What is PyPy.js ?
 
 In short: PyPy compiled to JavaScript
