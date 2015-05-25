@@ -4,3 +4,10 @@
 This git repository contains some example usage of PyPy.js
 
 It used the git repro https://github.com/jedie/pypyjs-source as a git submodule.
+
+==== Existing examples:
+
+* [[https://jedie.github.io/pypyjs-examples/minimal_console.html|/minimal_console.html]]
+
+A minimal console with the aim to use as few external dependencies.
+A full featured console, that used **jq-console** is here: [[http://pypyjs.org|pypyjs.org]]
