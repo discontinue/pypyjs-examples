@@ -8,6 +8,11 @@ It used the git repro https://github.com/jedie/pypyjs-source as a git submodule.
 
 ==== Existing examples:
 
+* [[https://jedie.github.io/pypyjs-examples/mandelbrot.html|/mandelbrot.html]]
+
+Render Mandelbrot fractal in browser via PyPy.js
+
+
 * [[https://jedie.github.io/pypyjs-examples/minimal_console.html|/minimal_console.html]]
 
 A minimal console with the aim to use as few external dependencies.

@@ -4,7 +4,6 @@ import time
 
 import js
 
-
 class Canvas(object):
     def __init__(self, width, height):
         self.width = width
@@ -20,9 +19,8 @@ class Canvas(object):
         jquery = js.globals["$"]
 
         canvas = jquery("#canvasMandelbrot")[0] # Maybe started in the past?
-        # if canvas == js.Undefined:
-        if repr(canvas) == "<js.Undefined>":
-            console = jquery("#console")
+        if canvas == js.undefined:
+            console = jquery("#output")
             console.before("""
                 <canvas id="canvasMandelbrot" width="%i" height="%i"></canvas>
             """ % (self.width, self.height))
@@ -47,19 +45,21 @@ class Mandelbrot(object):
         self.height = self.canvas.height
 
         self.y = 0
-        self.start_time = time.time()
-        self.next_update = time.time() + 1
+        self.last_update = self.start_time = time.time()
         self.last_pos = 0
+
+        self.done = False
 
     def render_mandelbrot_line(self):
         self.y += 1
         if self.y >= self.height:
-            duration = time.time() - self.start_time
-            msg = "%ix%ipx Rendered in %iSec." % (self.width, self.height, duration)
-            print(msg)
-            jquery = js.globals["$"]
-            jquery("#run_info").text(msg)
-            return False # stop recall
+            if not self.done:
+                self.done = True
+                duration = time.time() - self.start_time
+                msg = "%ix%ipx Rendered in %iSec." % (self.width, self.height, duration)
+                print(msg)
+                print(" --- END --- ")
+            return
 
         for x in range(self.width):
             z = complex(0, 0)
@@ -92,14 +92,16 @@ class Mandelbrot(object):
 
             canvas.draw_pixel(x, self.y, r, g, b)
 
-        if time.time() > self.next_update:
-            pos = (self.y * self.width)
-            pos_diff = pos - self.last_pos
-            print("%i Pixel/sec." % pos_diff)
-            self.last_pos = pos
-            self.next_update = time.time() + 1
+    def display_stats(self):
+        pos = (self.y * self.width)
+        pos_diff = pos - self.last_pos
 
-        return True # not complete rendered, yet
+        duration = time.time() - self.last_update
+        rate = pos_diff / duration
+
+        print("%i Pixel/sec." % rate)
+        self.last_pos = pos
+        self.last_update = time.time()
 
 
 if __name__ == "__main__":
@@ -118,8 +120,14 @@ if __name__ == "__main__":
 
     @js.Function
     def render_line():
-        check = mandelbrot.render_mandelbrot_line()
-        if check:
+        next_update = time.time() + 0.5
+        while time.time()<next_update:
+            mandelbrot.render_mandelbrot_line()
+
+        if not mandelbrot.done: # not complete, yet
+            mandelbrot.display_stats()
+
+            # see: https://github.com/rfk/pypyjs/issues/117
             js.globals.setTimeout(render_line, 0)
 
     render_line()
