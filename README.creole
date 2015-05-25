@@ -1,0 +1,6 @@
+
+=== PyPy.js examples
+
+This git repository contains some example usage of PyPy.js
+
+It used the git repro https://github.com/jedie/pypyjs-source as a git submodule.
