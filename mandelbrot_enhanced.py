@@ -89,7 +89,7 @@ class Mandelbrot(object):
         self.top = float(jquery.get_by_id("#top").val())
         self.bottom = float(jquery.get_by_id("#bottom").val())
 
-        print("%.1f %.1f %.1f %.1f" % (self.left, self.right, self.top, self.bottom))
+        print("%.2f %.2f %.2f %.2f" % (self.left, self.right, self.top, self.bottom))
 
         self.iterations = int(jquery.get_by_id("#iterations").val())
 
