@@ -44,15 +44,17 @@ class Canvas(object):
         self.width = width
         self.height = height
 
-        self.canvas = jquery.get_by_id(CANVAS_ID)[0]
-        self.context = self.canvas.getContext('2d')
-
-        self.pixel = self.context.createImageData(1, 1)
-        self.pixel_data = self.pixel.data
+        self.reset()
+        # self.pixel = self.context.createImageData(1, 1)
+        # self.pixel_data = self.pixel.data
 
     def draw_rect(self, x, y, r, g, b, alpha=255, width=1, height=1):
         self.context.fillStyle = 'rgba(%i,%i,%i,%i)' % (r, g, b, alpha)
         self.context.fillRect(x, y, width, height)
+
+    def reset(self):
+        self.canvas = jquery.get_by_id(CANVAS_ID)[0]
+        self.context = self.canvas.getContext('2d')
 
 
 class Mandelbrot(object):
@@ -71,6 +73,7 @@ class Mandelbrot(object):
         self.reset()
 
     def reset(self):
+        self.canvas.reset()
         self.progress_bar.set_percent(0, "start")
         self.y = 0
         self.step = self.height // 4
