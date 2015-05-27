@@ -15,6 +15,10 @@ Render Mandelbrot fractal in browser via PyPy.js
 * [[https://jedie.github.io/pypyjs-examples/mandelbrot.html|/mandelbrot.html]]
 * [[https://jedie.github.io/pypyjs-examples/mandelbrot-nojit.html|/mandelbrot-nojit.html]] (without PyPy JIT)
 
+WIP:
+
+* [[https://jedie.github.io/pypyjs-examples/mandelbrot_enhanced.html|/mandelbrot_enhanced.html]]
+
 
 ===== minimal console
 
