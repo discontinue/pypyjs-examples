@@ -1,35 +1,42 @@
 from __future__ import absolute_import, print_function
 
-try:
-    from colorsys import hsv_to_rgb
-except ImportError:
-    def hsv_to_rgb(h, s, v):
-        if s == 0.0:
-            return v, v, v
-        i = int(h*6.0) # XXX assume int() truncates!
-        f = (h*6.0) - i
-        p = v*(1.0 - s)
-        q = v*(1.0 - s*f)
-        t = v*(1.0 - s*(1.0-f))
-        i = i%6
-        if i == 0:
-            return v, t, p
-        if i == 1:
-            return q, v, p
-        if i == 2:
-            return p, v, t
-        if i == 3:
-            return p, q, v
-        if i == 4:
-            return t, p, v
-        if i == 5:
-            return v, p, q
-        # Cannot get here
+print("imports...")
 
-import random
-import time
-import js
-import math
+import time# after imports
+import random# add comments
+import math# as work-a-round
+import sys# for:
+from colorsys import hsv_to_rgb# https://github.com/rfk/pypyjs/issues/109
+
+import js# from PyPy.js
+
+CANVAS_ID="#mandelbrot"
+PROGRESS_BAR_ID="#progress-bar"
+
+class jQuery(object):
+    def __init__(self):
+        self.jquery = js.globals["$"]
+
+    def get_by_id(self, id):
+        dom_object = self.jquery(id)#[0]
+        if dom_object == js.undefined:
+            print("ERROR: Object with ID %r not found!" % id)
+            sys.exit()
+        return dom_object
+
+jquery = jQuery()
+
+
+class ProgressBar(object):
+    def __init__(self):
+        self.progress_bar = jquery.get_by_id(PROGRESS_BAR_ID)
+
+    def set_percent(self, percent, text):
+        percent = int(percent)
+        self.progress_bar.attr("aria-valuenow", percent)
+        self.progress_bar.width("%i%%" % percent)
+        self.progress_bar.text(text)
+
 
 
 class Canvas(object):
@@ -37,23 +44,11 @@ class Canvas(object):
         self.width = width
         self.height = height
 
-        self.canvas = self.create_canvas()
+        self.canvas = jquery.get_by_id(CANVAS_ID)[0]
         self.context = self.canvas.getContext('2d')
 
         self.pixel = self.context.createImageData(1, 1)
         self.pixel_data = self.pixel.data
-
-    def create_canvas(self):
-        jquery = js.globals["$"]
-
-        canvas = jquery("#canvasMandelbrot")[0] # Maybe started in the past?
-        if canvas == js.undefined:
-            console = jquery("#output")
-            console.before("""
-                <canvas id="canvasMandelbrot" width="%i" height="%i"></canvas>
-            """ % (self.width, self.height))
-            canvas = jquery("#canvasMandelbrot")[0]
-        return canvas
 
     def draw_rect(self, x, y, r, g, b, alpha=255, width=1, height=1):
         self.context.fillStyle = 'rgba(%i,%i,%i,%i)' % (r, g, b, alpha)
@@ -64,27 +59,37 @@ class Mandelbrot(object):
     """
     FIXME: interlace rendering is not accurate, yet!
     """
-    def __init__(self, canvas, left, right, top, bottom, iterations):
+    def __init__(self, canvas):
         self.canvas = canvas
-        self.left = left
-        self.right = right
-        self.top = top
-        self.bottom = bottom
-        self.iterations = iterations
+        self.progress_bar = ProgressBar()
 
         self.width = self.canvas.width
         self.height = self.canvas.height
 
+        self.running = True
+
+        self.reset()
+
+    def reset(self):
+        self.progress_bar.set_percent(0, "start")
         self.y = 0
         self.step = self.height // 4
         self.line_count = 0
         self.rendered_lines = []
         self.last_update = self.start_time = time.time()
         self.last_pos = 0
-
         self.done = False
 
-        # TODO: Choose able via web page:
+    def setup(self):
+        self.left = float(jquery.get_by_id("#left").val())
+        self.right = float(jquery.get_by_id("#right").val())
+        self.top = float(jquery.get_by_id("#top").val())
+        self.bottom = float(jquery.get_by_id("#bottom").val())
+
+        print("%.1f %.1f %.1f %.1f" % (self.left, self.right, self.top, self.bottom))
+
+        self.iterations = int(jquery.get_by_id("#iterations").val())
+
         # self.color_func = self.color_func_random
         # self.color_func = self.color_func_monochrome_red
         # self.color_func = self.color_func_hsv2rgb # very colorfull
@@ -92,6 +97,8 @@ class Mandelbrot(object):
         # self.color_func = self.color_func_color_steps
         # self.color_func = self.color_func_psychedelic # Psychedelic colors
         self.color_func = self.color_func_color_map # use COLOR_MAP
+
+        self.reset()
 
     def color_func_monochrome_red(self, count, norm, iterations):
         return (int(256 / iterations * norm), 0, 0)
@@ -191,7 +198,8 @@ class Mandelbrot(object):
             canvas.draw_rect(x, y, r, g, b, height=rect_height)
 
     def render_mandelbrot(self):
-        assert self.done == False
+        if not self.running or self.done:
+            return
 
         rect_height = 1
         # rect_height = self.step # FIXME
@@ -201,6 +209,7 @@ class Mandelbrot(object):
                 if self.step <= 1:
                     self.done = True
                     duration = time.time() - self.start_time
+                    self.display_stats() # Should display 100% ;)
                     print(len(self.rendered_lines), "lines are rendered")
                     msg = "%ix%ipx Rendered in %iSec." % (self.width, self.height, duration)
                     print(msg)
@@ -232,33 +241,59 @@ class Mandelbrot(object):
     def display_stats(self):
         pos = (self.line_count * self.width)
         pos_diff = pos - self.last_pos
+        self.last_pos = pos
 
         duration = time.time() - self.last_update
-        rate = pos_diff / duration
-
-        print("%i Pixel/sec." % rate)
-        self.last_pos = pos
         self.last_update = time.time()
+
+        rate = pos_diff / duration
+        percent = 100.0 * self.line_count / self.height
+        self.progress_bar.set_percent(percent, "%.1f%% (%i Pixel/sec.)" % (percent, rate))
+
+
+
+
 
 
 if __name__ == "__main__":
-    # TODO: Choose able via web page:
+    print("startup rendering...")
     width = 768
     height = 432
 
-    canvas = Canvas(width, height)
-    mandelbrot = Mandelbrot(
-        canvas,
-        # TODO: Choose able via web page:
-        left=-3,
-        right=0.8,
-        top=1.25,
-        bottom=-1.25,
-        iterations=40,
-    )
+    # width = 320
+    # height = 200
 
-    jquery = js.globals["$"]
-    jquery("h1").append(" - " + mandelbrot.color_func.__name__)
+    canvas = Canvas(width, height)
+    mandelbrot = Mandelbrot(canvas)
+    mandelbrot.setup()
+
+    jquery.jquery("h1").append(" - " + mandelbrot.color_func.__name__)
+
+    @js.Function
+    def pause_mandelbrot(event):
+        if mandelbrot.running:
+            mandelbrot.running = False
+            jquery.get_by_id("#pause").text("resume")
+            print("pause")
+        else:
+            mandelbrot.running = True
+            jquery.get_by_id("#pause").text("pause")
+            print("resume")
+
+    pause_button = jquery.get_by_id("#pause")
+    pause_button.click(pause_mandelbrot)
+
+
+    @js.Function
+    def update_mandelbrot(event):
+        print("update...")
+        mandelbrot.running = False
+        mandelbrot.setup()
+        mandelbrot.running = True
+        render_mandelbrot()
+
+    update_button = jquery.get_by_id("#update")
+    update_button.click(update_mandelbrot)
 
     @js.Function
     def render_mandelbrot():
@@ -267,5 +302,7 @@ if __name__ == "__main__":
         if not mandelbrot.done: # not complete, yet
             # see: https://github.com/rfk/pypyjs/issues/117
             js.globals.setTimeout(render_mandelbrot, 0)
+        else:
+            print("done.")
 
     render_mandelbrot()

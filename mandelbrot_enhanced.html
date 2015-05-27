@@ -1,36 +1,101 @@
 <html>
 <head>
     <title>PyPy.js - enhanced Mandelbrot</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
     <style>
+    noscript {
+        color: #f00;
+    }
     button {
         display:none;
     }
     pre {
-        width: 90%;
+        width: 100%;
         height: 20%;
         margin: 1em;
         padding: 1em;
         border: 5px solid #ddd;
         overflow: auto;
     }
+    #mandelbrot {
+        display: block;
+        border: 1px solid #000;
+        margin: 0 auto;
+    }
     </style>
 </head>
 <body>
-    <h1>PyPy.js - enhanced Mandelbrot</h1>
-    <p>
-        Render Mandelbrot fractal with <a href="http://pypyjs.org">PyPy.js</a>
-    </p>
-    <a href="https://github.com/jedie/pypyjs-examples"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
-    <noscript><h3>Please enable JavaScript for using PyPy.js</h3></noscript>
-    <pre id="output"></pre>
-    <hr />
-    <p>
-        PyPy.js is an experiment in building a fast and compliant python environment for the web.
-    <br/>
-        It uses the <a href="http://pypy.org/">PyPy</a> python interpreter, compiled for the web via
-        <a href="http://emscripten.org">emscripten</a>, with a custom JIT backend that emits <a href="http://asmjs.org">asm.js</a>
-        code at runtime.
-    </p>
+<div class='container'>
+    <div class="row">
+        <div class="col-sm-12">
+            <h1>PyPy.js - enhanced Mandelbrot</h1>
+            <p>
+                Render Mandelbrot fractal with <a href="http://pypyjs.org">PyPy.js</a>
+            </p>
+            <a href="https://github.com/jedie/pypyjs-examples"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
+            <noscript><h3>Please enable JavaScript for using PyPy.js</h3></noscript>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <canvas id="mandelbrot" width="768" height="432"></canvas>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="progress">
+              <div class="progress-bar progress-bar-info progress-bar-striped" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+                init...
+              </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <form class="form-inline" role="form" action="">
+                <p>
+                    Interesting values are: -2.4 -1.0 0.4 -0.4 or -0.2 -0.1 1.1 1.0
+                </p>
+                <div class="form-group">
+                    <label for="left">left:</label>
+                    <input type="number" id="left" min="-100" max="100" step="0.05" value="-2.5">
+
+                    <label for="right">right:</label>
+                    <input type="number" id="right" min="-100" max="100" step="0.05" value="1">
+                    
+                    <label for="top">top:</label>
+                    <input type="number" id="top" min="-100" max="100" step="0.05" value="1.4">
+                    
+                    <label for="bottom">bottom:</label>
+                    <input type="number" id="bottom" min="-100" max="100" step="0.05" value="-1.4">
+                    
+                    <label for="iterations">iterations:</label>
+                    <input type="number" id="iterations" min="1" max="200" step="1" value="40">
+                </div>
+                <div class="form-group">
+                    <button id="pause" class="btn btn-default">pause</button>
+                    <button id="update" class="btn btn-default">update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <pre id="output"></pre>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <p>
+                PyPy.js is an experiment in building a fast and compliant python environment for the web.
+            <br/>
+                It uses the <a href="http://pypy.org/">PyPy</a> python interpreter, compiled for the web via
+                <a href="http://emscripten.org">emscripten</a>, with a custom JIT backend that emits <a href="http://asmjs.org">asm.js</a>
+                code at runtime.
+            </p>
+        </div>
+    </div>
 </div>
 <script src="pypyjs-source/pypyjs/lib/Promise.min.js" type="text/javascript" charset="utf-8"></script>
 <script src="pypyjs-source/pypyjs/lib/FunctionPromise.js" type="text/javascript" charset="utf-8"></script>
@@ -53,6 +118,11 @@ function console_exec(code) {
     });
 }
 $(document).ready(function() {
+    $("form").submit(function() {
+        // never "submit" the actions-form
+        return false;
+    });
+
     try {
        window.vm = new PyPyJS();
     } catch (e) {
@@ -83,5 +153,6 @@ $(document).ready(function() {
     });
 });
 </script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 </body>
 </html>
