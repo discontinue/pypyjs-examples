@@ -32,7 +32,10 @@ This is needed for 'mandelbrot' example and you can better see file requests.
 
 Just do it e.g.:
 {{{
+~$ git clone https://github.com/jedie/pypyjs-examples.git
 ~$ cd pypyjs-examples
+~/pypyjs-examples$ git submodule init
+~/pypyjs-examples$ git submodule update
 ~/pypyjs-examples$ python simple_http_server.py
 }}}
 The server worked with Python 2 and 3 and starts at [[http://127.0.0.1:8000]].
