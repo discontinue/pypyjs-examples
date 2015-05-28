@@ -10,8 +10,16 @@ from colorsys import hsv_to_rgb# https://github.com/rfk/pypyjs/issues/109
 
 import js# from PyPy.js
 
+
+PY2 = sys.version_info[0] == 2
+if PY2:
+    # Python 2
+    range = xrange
+
+
 CANVAS_ID="#mandelbrot"
 PROGRESS_BAR_ID="#progress-bar"
+
 
 class jQuery(object):
     def __init__(self):
@@ -227,7 +235,7 @@ class Mandelbrot(object):
                 top + y * (bottom - top) / height
             )
             norm = abs(z) ** 2
-            for count in xrange(iterations):
+            for count in range(iterations):
                 if norm <= 4:
                     z = z * z + c
                     norm = abs(z * z)
