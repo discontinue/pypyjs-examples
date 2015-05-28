@@ -241,8 +241,6 @@ class Mandelbrot(object):
         if not self.running or self.done:
             return
 
-        rect_height = 1
-        # rect_height = self.step # FIXME
         next_return = time.time() + 0.5
         while time.time() < next_return:
             try:
@@ -259,7 +257,6 @@ class Mandelbrot(object):
 
             if new_iteration:
                 print("*** interlace iteration: %s" % iteration)
-                # canvas.draw_rect(x=0, y=0, r=128, g=0, b=0, alpha=128, width=self.step, height=self.height) # debug
 
             self._render_line(
                 self.canvas,
