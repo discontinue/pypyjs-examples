@@ -1,10 +1,7 @@
 from __future__ import absolute_import, print_function
 
-print("imports...")
-
 import time# after imports
 import random# add comments
-import math# as work-a-round
 import sys# for:
 from colorsys import hsv_to_rgb# https://github.com/rfk/pypyjs/issues/109
 
@@ -83,11 +80,9 @@ def interlace_generator(limit):
     step = 1
     iteration = 0
     size = interlace_steps[iteration]
-    new_iteration = True
 
     while True:
-        yield (pos, size, iteration, new_iteration)
-        new_iteration = False
+        yield (pos, size)
         pos += (size * step)
 
         if pos>limit:
@@ -99,7 +94,6 @@ def interlace_generator(limit):
                 return
 
             pos = size
-            new_iteration = True
 
 
 class Mandelbrot(object):
@@ -134,7 +128,7 @@ class Mandelbrot(object):
         self.top = float(jquery.get_by_id("#top").val())
         self.bottom = float(jquery.get_by_id("#bottom").val())
 
-        print("%.2f %.2f %.2f %.2f" % (self.left, self.right, self.top, self.bottom))
+        print("%f %f %f %f" % (self.left, self.right, self.top, self.bottom))
 
         self.iterations = int(jquery.get_by_id("#iterations").val())
 
@@ -252,7 +246,7 @@ class Mandelbrot(object):
         next_return = time.time() + 0.5
         while time.time() < next_return:
             try:
-                y, size, iteration, new_iteration = self.interlace_generator.next()
+                y, size = self.interlace_generator.next()
             except StopIteration:
                 self.done = True
                 duration = time.time() - self.start_time
@@ -262,9 +256,6 @@ class Mandelbrot(object):
                 print(msg)
                 print(" --- END --- ")
                 return
-
-            if new_iteration:
-                print("*** interlace iteration: %s" % iteration)
 
             self._render_line(
                 self.canvas,
@@ -307,8 +298,6 @@ if __name__ == "__main__":
     mandelbrot = Mandelbrot(canvas)
     mandelbrot.setup()
 
-    jquery.jquery("h1").append(" - " + mandelbrot.color_func.__name__)
-
     @js.Function
     def pause_mandelbrot(event):
         if mandelbrot.running:
@@ -334,6 +323,16 @@ if __name__ == "__main__":
 
     update_button = jquery.get_by_id("#update")
     update_button.click(update_mandelbrot)
+
+
+    @js.Function
+    def data_form_change(event):
+        print("form, changed:")
+        update_mandelbrot(event)
+
+    data_form = jquery.get_by_id("#data_form")
+    data_form.change(data_form_change)
+
 
     @js.Function
     def render_mandelbrot():
