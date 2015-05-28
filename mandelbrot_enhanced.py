@@ -57,6 +57,43 @@ class Canvas(object):
         self.context = self.canvas.getContext('2d')
 
 
+def interlace_generator(limit):
+    def gen_pow(limit):
+        interlace_steps = []
+        step=0
+        while True:
+            value = 2**step
+            if value>=limit:
+                return interlace_steps
+            interlace_steps.append(value)
+            step+=1
+    interlace_steps = gen_pow(limit)
+    interlace_steps.reverse()
+    #~ print("interlace_steps:", interlace_steps)
+
+    pos = 0
+    step = 1
+    iteration = 0
+    size = interlace_steps[iteration]
+    new_iteration = True
+
+    while True:
+        yield (pos, size, iteration, new_iteration)
+        new_iteration = False
+        pos += (size * step)
+
+        if pos>limit:
+            step = 2
+            iteration += 1
+            try:
+                size = interlace_steps[iteration]
+            except IndexError:
+                return
+
+            pos = size
+            new_iteration = True
+
+
 class Mandelbrot(object):
     """
     FIXME: interlace rendering is not accurate, yet!
@@ -78,10 +115,10 @@ class Mandelbrot(object):
         self.y = 0
         self.step = self.height // 4
         self.line_count = 0
-        self.rendered_lines = []
         self.last_update = self.start_time = time.time()
         self.last_pos = 0
         self.done = False
+        self.interlace_generator = interlace_generator(self.height)
 
     def setup(self):
         self.left = float(jquery.get_by_id("#left").val())
@@ -208,36 +245,31 @@ class Mandelbrot(object):
         # rect_height = self.step # FIXME
         next_return = time.time() + 0.5
         while time.time() < next_return:
-            if self.y >= self.height:
-                if self.step <= 1:
-                    self.done = True
-                    duration = time.time() - self.start_time
-                    self.display_stats() # Should display 100% ;)
-                    print(len(self.rendered_lines), "lines are rendered")
-                    msg = "%ix%ipx Rendered in %iSec." % (self.width, self.height, duration)
-                    print(msg)
-                    print(" --- END --- ")
-                    return
+            try:
+                y, size, iteration, new_iteration = self.interlace_generator.next()
+            except StopIteration:
+                self.done = True
+                duration = time.time() - self.start_time
+                self.display_stats() # Should display 100% ;)
+                print(len(self.rendered_lines), "lines are rendered")
+                msg = "%ix%ipx Rendered in %iSec." % (self.width, self.height, duration)
+                print(msg)
+                print(" --- END --- ")
+                return
 
+            if new_iteration:
+                print("*** interlace iteration: %s" % iteration)
                 # canvas.draw_rect(x=0, y=0, r=128, g=0, b=0, alpha=128, width=self.step, height=self.height) # debug
-                self.step = int(math.floor(self.step / 2.0))
-                # rect_height = self.step # FIXME
-                self.y = 0
-                print("Render step: %i" % self.step)
 
-            if self.y not in self.rendered_lines:
-                self._render_line(
-                    self.canvas,
-                    self.color_func,
-                    self.y,
-                    self.left, self.right, self.top, self.bottom,
-                    self.width, self.height, self.iterations,
-                    rect_height
-                )
-                self.line_count += 1
-                self.rendered_lines.append(self.y)
-
-            self.y += self.step
+            self._render_line(
+                self.canvas,
+                self.color_func,
+                y,
+                self.left, self.right, self.top, self.bottom,
+                self.width, self.height, self.iterations,
+                rect_height=size
+            )
+            self.line_count += 1
 
         self.display_stats()
 
