@@ -23,6 +23,13 @@
     .after_load {
         display:none;
     }
+    .move_buttons {
+        text-align: center;
+        vertical-align: middle;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
     </style>
 </head>
 <body>
@@ -35,8 +42,24 @@
         </div>
     </div>
     <div class="row after_load">
-        <div class="col-sm-12">
-            <canvas id="mandelbrot" width="768" height="432"></canvas>
+        <div class="col-sm-12 move_buttons">
+            <button type="button" class="btn btn-default" id="move_top">&#x2191;</button>
+        </div>
+    </div>
+    <div class="row after_load">
+        <div class="col-sm-1 move_buttons">
+            <button type="button" class="btn btn-default" id="move_left">&#x2190;</button>
+        </div>
+        <div class="col-sm-10">
+            <canvas id="mandelbrot"></canvas>
+        </div>
+        <div class="col-sm-1 move_buttons">
+            <button type="button" class="btn btn-default" id="move_right">&#x2192;</button>
+        </div>
+    </div>
+    <div class="row after_load">
+        <div class="col-sm-12 move_buttons">
+            <button type="button" class="btn btn-default" id="move_bottom">&#x2193;</button>
         </div>
     </div>
     <div class="row after_load">
@@ -51,30 +74,10 @@
     <div class="row after_load">
         <div class="col-sm-12">
             <form class="form-inline" id="data_form" role="form" action="">
-                <div class="form-group form-group-sm">
-                <p>
-                    Interesting values are:<br/>
-                    <strong>-2.4 -1.0 0.4 -0.4</strong>
-                    or <strong>-0.2 -0.1 1.1 1.0</strong>
-                    or <strong>-0.15 -0.05 0.95 0.9</strong>
-                    or <strong>-1.65 -1.60 -0.01 0.01</strong>
-                    or <strong>-1.64 -1.62 0.01 0.02</strong>
-                    or <strong>-0.0191 -0.0192 1.0001 1.0</strong>
-                </p>
                 <div class="input-group input-group-sm">
-                    <label for="left">left:</label>
-                    <input type="number" id="left" min="-100" max="100" step="0.0001" value="-2.5">
+                    <button id="zoom_in" class="btn btn-default">+</button>
+                    <button id="zoom_out" class="btn btn-default">-</button>
 
-                    <label for="right">right:</label>
-                    <input type="number" id="right" min="-100" max="100" step="0.0001" value="1.5">
-                    
-                    <label for="top">top:</label>
-                    <input type="number" id="top" min="-100" max="100" step="0.0001" value="1.4">
-                    
-                    <label for="bottom">bottom:</label>
-                    <input type="number" id="bottom" min="-100" max="100" step="0.0001" value="-1.4">
-                </div>
-                <div class="input-group input-group-sm">
                     <label for="iterations">iterations:</label>
                     <input type="number" id="iterations" min="1" max="400" step="1" value="40">
                     <button id="pause" class="btn btn-default">pause</button>

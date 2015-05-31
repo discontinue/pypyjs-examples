@@ -23,7 +23,8 @@ class jQuery(object):
         self.jquery = js.globals["$"]
 
     def get_by_id(self, id):
-        dom_object = self.jquery(id)#[0]
+        assert id.startswith("#")
+        dom_object = self.jquery(id)
         if dom_object == js.undefined:
             print("ERROR: Object with ID %r not found!" % id)
             sys.exit()
@@ -59,6 +60,8 @@ class Canvas(object):
 
     def reset(self):
         self.canvas = jquery.get_by_id(CANVAS_ID)[0]
+        self.canvas.width = self.width
+        self.canvas.height = self.height
         self.context = self.canvas.getContext('2d')
 
 
@@ -97,9 +100,11 @@ def interlace_generator(limit):
 
 
 class Mandelbrot(object):
-    """
-    FIXME: interlace rendering is not accurate, yet!
-    """
+    LEFT = -2.0
+    RIGHT = 2.0
+    TOP = 2.0
+    BOTTOM = -2.0
+
     def __init__(self, canvas):
         self.canvas = canvas
         self.progress_bar = ProgressBar()
@@ -109,7 +114,15 @@ class Mandelbrot(object):
 
         self.running = True
 
+        self.center()
         self.reset()
+        self.calc_dimensions()
+
+    def center(self):
+        self.horizontal_offset = 0
+        self.vertical_offset = 0
+        self.zoom = 1.0
+        self.running = True
 
     def reset(self):
         self.canvas.reset()
@@ -119,18 +132,26 @@ class Mandelbrot(object):
         self.line_count = 0
         self.last_update = self.start_time = time.time()
         self.last_pos = 0
-        self.done = False
-        self.interlace_generator = interlace_generator(self.height)
 
-    def setup(self):
-        self.left = float(jquery.get_by_id("#left").val())
-        self.right = float(jquery.get_by_id("#right").val())
-        self.top = float(jquery.get_by_id("#top").val())
-        self.bottom = float(jquery.get_by_id("#bottom").val())
-
-        print("%f %f %f %f" % (self.left, self.right, self.top, self.bottom))
+    def calc_dimensions(self):
+        print("horizontal offset..:", self.horizontal_offset)
+        print("vertical offset....:", self.vertical_offset)
+        print("zoom...............:", self.zoom)
+        self.left=(self.LEFT + self.horizontal_offset) * self.zoom
+        self.right=(self.RIGHT + self.horizontal_offset) * self.zoom
+        self.top=(self.TOP + self.vertical_offset) * self.zoom
+        self.bottom=(self.BOTTOM + self.vertical_offset) * self.zoom
+        print("Dimensions:", self.left, self.right, self.top, self.bottom)
 
         self.iterations = int(jquery.get_by_id("#iterations").val())
+        print("Iterations:", self.iterations)
+
+        _interlace_generator = interlace_generator(self.height)
+        try:
+            self.interlace_generator_next = _interlace_generator.next # Python 2
+        except AttributeError:
+            self.interlace_generator_next = _interlace_generator.__next__ # Python 3
+        self.done = False
 
         # self.color_func = self.color_func_random
         # self.color_func = self.color_func_monochrome_red
@@ -222,6 +243,7 @@ class Mandelbrot(object):
                 return (0, 0, 0) # black
 
     def _render_line(self, canvas, color_func, y, left, right, top, bottom, width, height, iterations, rect_height):
+        count=0
         for x in range(width):
             z = complex(0, 0)
             c = complex(
@@ -246,12 +268,11 @@ class Mandelbrot(object):
         next_return = time.time() + 0.5
         while time.time() < next_return:
             try:
-                y, size = self.interlace_generator.next()
+                y, size = self.interlace_generator_next()
             except StopIteration:
                 self.done = True
                 duration = time.time() - self.start_time
                 self.display_stats() # Should display 100% ;)
-                print(len(self.rendered_lines), "lines are rendered")
                 msg = "%ix%ipx Rendered in %iSec." % (self.width, self.height, duration)
                 print(msg)
                 print(" --- END --- ")
@@ -282,21 +303,12 @@ class Mandelbrot(object):
         self.progress_bar.set_percent(percent, "%.1f%% (%i Pixel/sec.)" % (percent, rate))
 
 
-
-
-
-
 if __name__ == "__main__":
     print("startup rendering...")
-    width = 768
-    height = 432
-
-    # width = 320
-    # height = 200
+    width = height = 400
 
     canvas = Canvas(width, height)
     mandelbrot = Mandelbrot(canvas)
-    mandelbrot.setup()
 
     @js.Function
     def pause_mandelbrot(event):
@@ -317,7 +329,7 @@ if __name__ == "__main__":
     def update_mandelbrot(event):
         print("update...")
         mandelbrot.running = False
-        mandelbrot.setup()
+        mandelbrot.calc_dimensions()
         mandelbrot.running = True
         render_mandelbrot()
 
@@ -333,6 +345,58 @@ if __name__ == "__main__":
     data_form = jquery.get_by_id("#data_form")
     data_form.change(data_form_change)
 
+    @js.Function
+    def move_right(event):
+        mandelbrot.running = False
+        print("move right")
+        mandelbrot.horizontal_offset += 0.1
+        update_mandelbrot(event)
+    jquery.get_by_id("#move_right").click(move_right)
+
+    @js.Function
+    def move_left(event):
+        mandelbrot.running = False
+        print("move left")
+        mandelbrot.horizontal_offset -= 0.1
+        update_mandelbrot(event)
+    jquery.get_by_id("#move_left").click(move_left)
+
+
+    @js.Function
+    def move_top(event):
+        mandelbrot.running = False
+        print("move top")
+        mandelbrot.vertical_offset += 0.1
+        update_mandelbrot(event)
+    jquery.get_by_id("#move_top").click(move_top)
+
+    @js.Function
+    def move_bottom(event):
+        mandelbrot.running = False
+        print("move bottom")
+        mandelbrot.vertical_offset -= 0.1
+        update_mandelbrot(event)
+    jquery.get_by_id("#move_bottom").click(move_bottom)
+    
+    @js.Function
+    def zoom_in(event):
+        mandelbrot.running = False
+        print("zoom in")
+        mandelbrot.zoom -= mandelbrot.zoom * 0.1
+        mandelbrot.horizontal_offset += mandelbrot.horizontal_offset * 0.1
+        mandelbrot.vertical_offset += mandelbrot.vertical_offset * 0.1
+        update_mandelbrot(event)
+    jquery.get_by_id("#zoom_in").click(zoom_in)
+
+    @js.Function
+    def zoom_out(event):
+        mandelbrot.running = False
+        print("zoom out")
+        mandelbrot.zoom += mandelbrot.zoom * 0.1
+        mandelbrot.horizontal_offset -= mandelbrot.horizontal_offset * 0.1
+        mandelbrot.vertical_offset -= mandelbrot.vertical_offset * 0.1
+        update_mandelbrot(event)
+    jquery.get_by_id("#zoom_out").click(zoom_out)
 
     @js.Function
     def render_mandelbrot():
