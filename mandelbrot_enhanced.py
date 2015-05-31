@@ -1,17 +1,22 @@
 from __future__ import absolute_import, print_function
 
-print("imports...")
-
 import time# after imports
 import random# add comments
-import math# as work-a-round
 import sys# for:
 from colorsys import hsv_to_rgb# https://github.com/rfk/pypyjs/issues/109
 
 import js# from PyPy.js
 
+
+PY2 = sys.version_info[0] == 2
+if PY2:
+    # Python 2
+    range = xrange
+
+
 CANVAS_ID="#mandelbrot"
 PROGRESS_BAR_ID="#progress-bar"
+
 
 class jQuery(object):
     def __init__(self):
@@ -57,6 +62,40 @@ class Canvas(object):
         self.context = self.canvas.getContext('2d')
 
 
+def interlace_generator(limit):
+    def gen_pow(limit):
+        interlace_steps = []
+        step=0
+        while True:
+            value = 2**step
+            if value>=limit:
+                return interlace_steps
+            interlace_steps.append(value)
+            step+=1
+    interlace_steps = gen_pow(limit)
+    interlace_steps.reverse()
+    #~ print("interlace_steps:", interlace_steps)
+
+    pos = 0
+    step = 1
+    iteration = 0
+    size = interlace_steps[iteration]
+
+    while True:
+        yield (pos, size)
+        pos += (size * step)
+
+        if pos>limit:
+            step = 2
+            iteration += 1
+            try:
+                size = interlace_steps[iteration]
+            except IndexError:
+                return
+
+            pos = size
+
+
 class Mandelbrot(object):
     """
     FIXME: interlace rendering is not accurate, yet!
@@ -78,10 +117,10 @@ class Mandelbrot(object):
         self.y = 0
         self.step = self.height // 4
         self.line_count = 0
-        self.rendered_lines = []
         self.last_update = self.start_time = time.time()
         self.last_pos = 0
         self.done = False
+        self.interlace_generator = interlace_generator(self.height)
 
     def setup(self):
         self.left = float(jquery.get_by_id("#left").val())
@@ -89,7 +128,7 @@ class Mandelbrot(object):
         self.top = float(jquery.get_by_id("#top").val())
         self.bottom = float(jquery.get_by_id("#bottom").val())
 
-        print("%.2f %.2f %.2f %.2f" % (self.left, self.right, self.top, self.bottom))
+        print("%f %f %f %f" % (self.left, self.right, self.top, self.bottom))
 
         self.iterations = int(jquery.get_by_id("#iterations").val())
 
@@ -190,7 +229,7 @@ class Mandelbrot(object):
                 top + y * (bottom - top) / height
             )
             norm = abs(z) ** 2
-            for count in xrange(iterations):
+            for count in range(iterations):
                 if norm <= 4:
                     z = z * z + c
                     norm = abs(z * z)
@@ -204,40 +243,29 @@ class Mandelbrot(object):
         if not self.running or self.done:
             return
 
-        rect_height = 1
-        # rect_height = self.step # FIXME
         next_return = time.time() + 0.5
         while time.time() < next_return:
-            if self.y >= self.height:
-                if self.step <= 1:
-                    self.done = True
-                    duration = time.time() - self.start_time
-                    self.display_stats() # Should display 100% ;)
-                    print(len(self.rendered_lines), "lines are rendered")
-                    msg = "%ix%ipx Rendered in %iSec." % (self.width, self.height, duration)
-                    print(msg)
-                    print(" --- END --- ")
-                    return
+            try:
+                y, size = self.interlace_generator.next()
+            except StopIteration:
+                self.done = True
+                duration = time.time() - self.start_time
+                self.display_stats() # Should display 100% ;)
+                print(len(self.rendered_lines), "lines are rendered")
+                msg = "%ix%ipx Rendered in %iSec." % (self.width, self.height, duration)
+                print(msg)
+                print(" --- END --- ")
+                return
 
-                # canvas.draw_rect(x=0, y=0, r=128, g=0, b=0, alpha=128, width=self.step, height=self.height) # debug
-                self.step = int(math.floor(self.step / 2.0))
-                # rect_height = self.step # FIXME
-                self.y = 0
-                print("Render step: %i" % self.step)
-
-            if self.y not in self.rendered_lines:
-                self._render_line(
-                    self.canvas,
-                    self.color_func,
-                    self.y,
-                    self.left, self.right, self.top, self.bottom,
-                    self.width, self.height, self.iterations,
-                    rect_height
-                )
-                self.line_count += 1
-                self.rendered_lines.append(self.y)
-
-            self.y += self.step
+            self._render_line(
+                self.canvas,
+                self.color_func,
+                y,
+                self.left, self.right, self.top, self.bottom,
+                self.width, self.height, self.iterations,
+                rect_height=size
+            )
+            self.line_count += 1
 
         self.display_stats()
 
@@ -270,8 +298,6 @@ if __name__ == "__main__":
     mandelbrot = Mandelbrot(canvas)
     mandelbrot.setup()
 
-    jquery.jquery("h1").append(" - " + mandelbrot.color_func.__name__)
-
     @js.Function
     def pause_mandelbrot(event):
         if mandelbrot.running:
@@ -297,6 +323,16 @@ if __name__ == "__main__":
 
     update_button = jquery.get_by_id("#update")
     update_button.click(update_mandelbrot)
+
+
+    @js.Function
+    def data_form_change(event):
+        print("form, changed:")
+        update_mandelbrot(event)
+
+    data_form = jquery.get_by_id("#data_form")
+    data_form.change(data_form_change)
+
 
     @js.Function
     def render_mandelbrot():
