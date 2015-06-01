@@ -30,6 +30,9 @@ class jQuery(object):
             sys.exit()
         return dom_object
 
+    def __call__(self, *args, **kwargs):
+        return self.jquery(*args, **kwargs)
+
 jquery = jQuery()
 
 
@@ -129,6 +132,7 @@ class Mandelbrot(object):
     def reset(self):
         self.canvas.reset()
         self.progress_bar.set_percent(0, "start")
+        self.change_scale = 0.5
         self.y = 0
         self.step = self.height // 4
         self.line_count = 0
@@ -136,8 +140,9 @@ class Mandelbrot(object):
         self.last_pos = 0
 
     def calc_dimensions(self):
-        print("horizontal offset..:", self.horizontal_offset)
-        print("vertical offset....:", self.vertical_offset)
+        print("offset [h,v].......: %s, %s" % (
+            self.horizontal_offset, self.vertical_offset
+        ))
         print("zoom...............: x%.1f (%s)" % (1/self.zoom, self.zoom))
 
         self.left=(self.LEFT * self.zoom) + self.horizontal_offset
@@ -161,18 +166,41 @@ class Mandelbrot(object):
         # self.color_func = self.color_func_hsv2rgb # very colorfull
         # self.color_func = self.color_func_red_green_ramp # red <-> green color ramp
         # self.color_func = self.color_func_color_steps
-        self.color_func = self.color_func_psychedelic # Psychedelic colors
-        # self.color_func = self.color_func_color_map # use COLOR_MAP
+        # self.color_func = self.color_func_psychedelic # Psychedelic colors
+        self.color_func = self.color_func_color_map # use COLOR_MAP
 
         self.reset()
 
+    def move_right(self):
+        self.horizontal_offset += (self.change_scale * self.zoom)
+
+    def move_left(self):
+        self.horizontal_offset -= (self.change_scale * self.zoom)
+
+    def move_top(self):
+        self.vertical_offset += (self.change_scale * self.zoom)
+
+    def move_bottom(self):
+        self.vertical_offset -= (self.change_scale * self.zoom)
+
+    def zoom_in(self):
+        self.zoom -= self.zoom * self.change_scale
+        self.horizontal_offset -= self.horizontal_offset * self.zoom
+        self.vertical_offset -= self.vertical_offset * self.zoom
+
+    def zoom_out(self):
+        self.zoom += self.zoom * self.change_scale
+        self.horizontal_offset -= self.horizontal_offset * self.zoom
+        self.vertical_offset -= self.vertical_offset * self.zoom
+
     def stop(self):
         self.running = False
-        print("stop")
+        print("stop rendering")
         for id in self.set_timeout_ids:
             js.globals.clearTimeout(id)
-        print("cleared timeouts:", self.set_timeout_ids)
-        self.set_timeout_ids=[]
+        if self.set_timeout_ids:
+            print("cleared timeouts:", self.set_timeout_ids)
+            self.set_timeout_ids=[]
 
     def color_func_monochrome_red(self, count, norm, iterations):
         return (int(256 / iterations * norm), 0, 0)
@@ -314,7 +342,7 @@ class Mandelbrot(object):
         self.progress_bar.set_percent(percent, "%.1f%% (%i Pixel/sec.)" % (percent, rate))
 
 
-CHANGE_SCALE = 0.5
+
 
 
 if __name__ == "__main__":
@@ -343,7 +371,6 @@ if __name__ == "__main__":
     @js.Function
     def update_mandelbrot(event):
         print("update...")
-        mandelbrot.stop()
         mandelbrot.calc_dimensions()
         mandelbrot.running = True
         render_mandelbrot()
@@ -361,58 +388,22 @@ if __name__ == "__main__":
     data_form.change(data_form_change)
 
     @js.Function
-    def move_right(event):
+    def change_mandelbrot(event):
         mandelbrot.stop()
-        print("move right")
-        print("zoom factor:", 1/mandelbrot.zoom)
-        mandelbrot.horizontal_offset += (CHANGE_SCALE * mandelbrot.zoom)
-        update_mandelbrot(event)
-    jquery.get_by_id("#move_right").click(move_right)
+        obj_id = event.target.id
+        obj_id = str(obj_id) # convert js.String to real string
+        # print("clicked on ID %r" % obj_id)
+        try:
+            func = getattr(mandelbrot, obj_id)
+        except Exception as err:
+            print("Error: %s" % err)
+        else:
+            print("call 'mandelbrot.%s()'" % func.__name__)
+            func()
+            update_mandelbrot(event)
 
-    @js.Function
-    def move_left(event):
-        mandelbrot.stop()
-        print("move left")
-        mandelbrot.horizontal_offset -= (CHANGE_SCALE * mandelbrot.zoom)
-        update_mandelbrot(event)
-    jquery.get_by_id("#move_left").click(move_left)
+    jquery(".change_mandelbrot").click(change_mandelbrot)
 
-
-    @js.Function
-    def move_top(event):
-        mandelbrot.stop()
-        print("move top")
-        mandelbrot.vertical_offset += (CHANGE_SCALE * mandelbrot.zoom)
-        update_mandelbrot(event)
-    jquery.get_by_id("#move_top").click(move_top)
-
-    @js.Function
-    def move_bottom(event):
-        mandelbrot.stop()
-        print("move bottom")
-        mandelbrot.vertical_offset -= (CHANGE_SCALE * mandelbrot.zoom)
-        update_mandelbrot(event)
-    jquery.get_by_id("#move_bottom").click(move_bottom)
-    
-    @js.Function
-    def zoom_in(event):
-        mandelbrot.stop()
-        print("zoom in")
-        mandelbrot.zoom -= mandelbrot.zoom * CHANGE_SCALE
-        mandelbrot.horizontal_offset -= mandelbrot.horizontal_offset * mandelbrot.zoom
-        mandelbrot.vertical_offset -= mandelbrot.vertical_offset * mandelbrot.zoom
-        update_mandelbrot(event)
-    jquery.get_by_id("#zoom_in").click(zoom_in)
-
-    @js.Function
-    def zoom_out(event):
-        mandelbrot.stop()
-        print("zoom out")
-        mandelbrot.zoom += mandelbrot.zoom * CHANGE_SCALE
-        mandelbrot.horizontal_offset -= mandelbrot.horizontal_offset * mandelbrot.zoom
-        mandelbrot.vertical_offset -= mandelbrot.vertical_offset * mandelbrot.zoom
-        update_mandelbrot(event)
-    jquery.get_by_id("#zoom_out").click(zoom_out)
 
     @js.Function
     def render_mandelbrot():
