@@ -1,0 +1,165 @@
+<html>
+<head>
+    <title>PyPy.js no-JIT - enhanced Mandelbrot</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
+    <style>
+    noscript {
+        color: #f00;
+    }
+    pre {
+        width: 100%;
+        height: 20%;
+        margin: 1em;
+        padding: 1em;
+        border: 5px solid #ddd;
+        overflow: auto;
+    }
+    #mandelbrot {
+        display:block;
+        border: 1px solid #000;
+        margin: 0 auto;
+    }
+    .after_load {
+        display:none;
+    }
+    .move_buttons {
+        text-align: center;
+        vertical-align: middle;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    </style>
+</head>
+<body>
+<div class='container'>
+    <div class="row">
+        <div class="col-sm-12">
+            <h1>PyPy.js no-JIT - enhanced Mandelbrot</h1>
+            <a href="https://github.com/jedie/pypyjs-examples"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
+            <noscript><h3>Please enable JavaScript for using PyPy.js</h3></noscript>
+        </div>
+    </div>
+    <div class="row after_load">
+        <div class="col-sm-12 move_buttons">
+            <button type="button" class="change_mandelbrot btn btn-default" id="move_top">&#x2191;</button>
+        </div>
+    </div>
+    <div class="row after_load">
+        <div class="col-sm-1 move_buttons">
+            <button type="button" class="change_mandelbrot btn btn-default" id="move_left">&#x2190;</button>
+        </div>
+        <div class="col-sm-10">
+            <canvas id="mandelbrot"></canvas>
+        </div>
+        <div class="col-sm-1 move_buttons">
+            <button type="button" class="change_mandelbrot btn btn-default" id="move_right">&#x2192;</button>
+        </div>
+    </div>
+    <div class="row after_load">
+        <div class="col-sm-12 move_buttons">
+            <button type="button" class="change_mandelbrot btn btn-default" id="move_bottom">&#x2193;</button>
+        </div>
+    </div>
+    <div class="row after_load">
+        <div class="col-sm-12">
+            <div class="progress">
+              <div class="progress-bar progress-bar-info progress-bar-striped" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+                init...
+              </div>
+            </div>
+        </div>
+    </div>
+    <div class="row after_load">
+        <div class="col-sm-12">
+            <form class="form-inline" id="data_form" role="form" action="">
+                <div class="input-group input-group-sm">
+                    <button id="zoom_in" class="change_mandelbrot btn btn-default">+</button>
+                    <button id="zoom_out" class="change_mandelbrot btn btn-default">-</button>
+
+                    <label for="iterations">iterations:</label>
+                    <input type="number" id="iterations" min="1" max="400" step="1" value="40">
+                    <button id="pause" class="btn btn-default">pause</button>
+                    <button id="update" class="btn btn-default">update</button>
+                </div>
+                    </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <pre id="output"></pre>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <p>
+                PyPy.js is an experiment in building a fast and compliant python environment for the web.
+            <br/>
+                It uses the <a href="http://pypy.org/">PyPy</a> python interpreter, compiled for the web via
+                <a href="http://emscripten.org">emscripten</a>, with a custom JIT backend that emits <a href="http://asmjs.org">asm.js</a>
+                code at runtime.
+            </p>
+        </div>
+    </div>
+</div>
+<script src="pypyjs-release-nojit/lib/Promise.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="pypyjs-release-nojit/lib/FunctionPromise.js" type="text/javascript" charset="utf-8"></script>
+<script src="pypyjs-release-nojit/lib/pypy.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<script type="text/javascript" charset="utf-8">
+try {
+    jQuery(document);
+} catch (e) {
+    alert("Error, jQuery JS not loaded!\n Original error was:" + e);
+}
+function console_exec(code) {
+    vm.exec(code).then(function() {
+        console.log("OK");
+    }, function (err) {
+        // err is an instance of PyPyJS.Error
+        console.log("ERROR: "+err.name+": "+err.message+"!)");
+        vm.stderr(err.trace); // the human-readable traceback, as a string
+    });
+}
+$(document).ready(function() {
+    $("form").submit(function() {
+        // never "submit" the actions-form
+        return false;
+    });
+
+    try {
+       window.vm = new PyPyJS();
+    } catch (e) {
+        alert("Error, pypy.js not loaded!\n Original error was:" + e);
+    }
+    out = $("#output");
+    vm.stdout = vm.stderr = function(data) {
+        out.append(data);
+        out.scrollTop(out.prop("scrollHeight")); // auto scroll down
+    }
+    vm.stdout.reset = vm.stderr.reset = function(data) {
+        out.empty();
+    }
+
+    vm.stdout("loading PyPy.js...");
+    vm.ready.then(function() {
+        vm.stdout.reset();
+
+        var py_filename="mandelbrot_enhanced.py";
+        vm.stdout("request '" + py_filename + "'...");
+        $.get( py_filename, function( data ) {
+            $(".after_load").slideDown("slow");
+            vm.stdout("exec...");
+            console_exec( data );
+        }).fail(function() {
+            vm.stderr("error!");
+        });
+    });
+});
+</script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+</body>
+</html>
