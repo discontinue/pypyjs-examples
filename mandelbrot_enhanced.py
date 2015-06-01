@@ -138,15 +138,16 @@ class Mandelbrot(object):
     def calc_dimensions(self):
         print("horizontal offset..:", self.horizontal_offset)
         print("vertical offset....:", self.vertical_offset)
-        print("zoom...............: x%.1f (%f)" % (1/self.zoom, self.zoom))
-        self.left=(self.LEFT + self.horizontal_offset) * self.zoom
-        self.right=(self.RIGHT + self.horizontal_offset) * self.zoom
-        self.top=(self.TOP + self.vertical_offset) * self.zoom
-        self.bottom=(self.BOTTOM + self.vertical_offset) * self.zoom
-        print("Dimensions:", self.left, self.right, self.top, self.bottom)
+        print("zoom...............: x%.1f (%s)" % (1/self.zoom, self.zoom))
+
+        self.left=(self.LEFT * self.zoom) + self.horizontal_offset
+        self.right=(self.RIGHT * self.zoom) + self.horizontal_offset
+        self.top=(self.TOP * self.zoom) + self.vertical_offset
+        self.bottom=(self.BOTTOM * self.zoom) + self.vertical_offset
+        print("coordinates........:", self.left, self.right, self.top, self.bottom)
 
         self.iterations = int(jquery.get_by_id("#iterations").val())
-        print("Iterations:", self.iterations)
+        print("Iterations.........:", self.iterations)
 
         _interlace_generator = interlace_generator(self.height)
         try:
@@ -160,8 +161,8 @@ class Mandelbrot(object):
         # self.color_func = self.color_func_hsv2rgb # very colorfull
         # self.color_func = self.color_func_red_green_ramp # red <-> green color ramp
         # self.color_func = self.color_func_color_steps
-        # self.color_func = self.color_func_psychedelic # Psychedelic colors
-        self.color_func = self.color_func_color_map # use COLOR_MAP
+        self.color_func = self.color_func_psychedelic # Psychedelic colors
+        # self.color_func = self.color_func_color_map # use COLOR_MAP
 
         self.reset()
 
@@ -255,14 +256,14 @@ class Mandelbrot(object):
     def _render_line(self, canvas, color_func, y, left, right, top, bottom, width, height, iterations, rect_height):
         count=0
         for x in range(width):
-            z = complex(0, 0)
+            z = complex(0.0, 0.0)
             c = complex(
                 left + x * (right - left) / width,
                 top + y * (bottom - top) / height
             )
-            norm = abs(z) ** 2
+            norm = abs(z) ** 2.0
             for count in range(iterations):
-                if norm <= 4:
+                if norm <= 4.0:
                     z = z * z + c
                     norm = abs(z * z)
                 else:
@@ -364,11 +365,7 @@ if __name__ == "__main__":
         mandelbrot.stop()
         print("move right")
         print("zoom factor:", 1/mandelbrot.zoom)
-        # mandelbrot.horizontal_offset += (CHANGE_SCALE * (1/mandelbrot.zoom))
-        # if mandelbrot.horizontal_offset == 0:
-        mandelbrot.horizontal_offset += CHANGE_SCALE
-        # else:
-        #     mandelbrot.horizontal_offset += mandelbrot.horizontal_offset * CHANGE_SCALE
+        mandelbrot.horizontal_offset += (CHANGE_SCALE * mandelbrot.zoom)
         update_mandelbrot(event)
     jquery.get_by_id("#move_right").click(move_right)
 
@@ -376,11 +373,7 @@ if __name__ == "__main__":
     def move_left(event):
         mandelbrot.stop()
         print("move left")
-        # mandelbrot.horizontal_offset -= (CHANGE_SCALE * (1/mandelbrot.zoom))
-        # if mandelbrot.horizontal_offset == 0:
-        mandelbrot.horizontal_offset -= CHANGE_SCALE
-        # else:
-        #     mandelbrot.horizontal_offset -= mandelbrot.horizontal_offset * CHANGE_SCALE
+        mandelbrot.horizontal_offset -= (CHANGE_SCALE * mandelbrot.zoom)
         update_mandelbrot(event)
     jquery.get_by_id("#move_left").click(move_left)
 
@@ -389,7 +382,7 @@ if __name__ == "__main__":
     def move_top(event):
         mandelbrot.stop()
         print("move top")
-        mandelbrot.vertical_offset += CHANGE_SCALE
+        mandelbrot.vertical_offset += (CHANGE_SCALE * mandelbrot.zoom)
         update_mandelbrot(event)
     jquery.get_by_id("#move_top").click(move_top)
 
@@ -397,7 +390,7 @@ if __name__ == "__main__":
     def move_bottom(event):
         mandelbrot.stop()
         print("move bottom")
-        mandelbrot.vertical_offset -= CHANGE_SCALE
+        mandelbrot.vertical_offset -= (CHANGE_SCALE * mandelbrot.zoom)
         update_mandelbrot(event)
     jquery.get_by_id("#move_bottom").click(move_bottom)
     
@@ -406,8 +399,8 @@ if __name__ == "__main__":
         mandelbrot.stop()
         print("zoom in")
         mandelbrot.zoom -= mandelbrot.zoom * CHANGE_SCALE
-        mandelbrot.horizontal_offset += mandelbrot.horizontal_offset * CHANGE_SCALE
-        mandelbrot.vertical_offset += mandelbrot.vertical_offset * CHANGE_SCALE
+        mandelbrot.horizontal_offset -= mandelbrot.horizontal_offset * mandelbrot.zoom
+        mandelbrot.vertical_offset -= mandelbrot.vertical_offset * mandelbrot.zoom
         update_mandelbrot(event)
     jquery.get_by_id("#zoom_in").click(zoom_in)
 
@@ -416,8 +409,8 @@ if __name__ == "__main__":
         mandelbrot.stop()
         print("zoom out")
         mandelbrot.zoom += mandelbrot.zoom * CHANGE_SCALE
-        mandelbrot.horizontal_offset -= mandelbrot.horizontal_offset * CHANGE_SCALE
-        mandelbrot.vertical_offset -= mandelbrot.vertical_offset * CHANGE_SCALE
+        mandelbrot.horizontal_offset -= mandelbrot.horizontal_offset * mandelbrot.zoom
+        mandelbrot.vertical_offset -= mandelbrot.vertical_offset * mandelbrot.zoom
         update_mandelbrot(event)
     jquery.get_by_id("#zoom_out").click(zoom_out)
 
