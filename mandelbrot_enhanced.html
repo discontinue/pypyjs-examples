@@ -42,24 +42,16 @@
         </div>
     </div>
     <div class="row after_load">
-        <div class="col-sm-12 move_buttons">
-            <button type="button" class="change_mandelbrot btn btn-default" id="move_top">&#x2191;</button>
-        </div>
-    </div>
-    <div class="row after_load">
-        <div class="col-sm-1 move_buttons">
+        <div class="col-sm-2 move_buttons">
+            <button type="button" class="change_mandelbrot btn btn-default" id="move_top">&#x2191;</button><br />
             <button type="button" class="change_mandelbrot btn btn-default" id="move_left">&#x2190;</button>
+            <button type="button" class="change_mandelbrot btn btn-default" id="move_right">&#x2192;</button><br />
+            <button id="zoom_out" class="change_mandelbrot btn btn-default">-</button>
+            <button type="button" class="change_mandelbrot btn btn-default" id="move_bottom">&#x2193;</button>
+            <button id="zoom_in" class="change_mandelbrot btn btn-default">+</button>
         </div>
         <div class="col-sm-10">
             <canvas id="mandelbrot"></canvas>
-        </div>
-        <div class="col-sm-1 move_buttons">
-            <button type="button" class="change_mandelbrot btn btn-default" id="move_right">&#x2192;</button>
-        </div>
-    </div>
-    <div class="row after_load">
-        <div class="col-sm-12 move_buttons">
-            <button type="button" class="change_mandelbrot btn btn-default" id="move_bottom">&#x2193;</button>
         </div>
     </div>
     <div class="row after_load">
@@ -75,9 +67,6 @@
         <div class="col-sm-12">
             <form class="form-inline" id="data_form" role="form" action="">
                 <div class="input-group input-group-sm">
-                    <button id="zoom_in" class="change_mandelbrot btn btn-default">+</button>
-                    <button id="zoom_out" class="change_mandelbrot btn btn-default">-</button>
-
                     <label for="iterations">iterations:</label>
                     <input type="number" id="iterations" min="1" max="400" step="1" value="40">
                     <button id="pause" class="btn btn-default">pause</button>
