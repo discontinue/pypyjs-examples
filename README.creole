@@ -53,3 +53,14 @@ In short: PyPy compiled to JavaScript
 Little bit longer: PyPy.js is an experiment in building a fast and compliant in-browser python interpreter, by compiling PyPy into javascript and retargeting its JIT to emit javascript code at runtime.
 
 More info: http://pypyjs.org/
+
+
+=== Repository Overview
+
+| [[https://github.com/pypyjs/pypyjs|pypyjs]]                             | Main repository to built a PyPyJS release
+| [[https://github.com/pypyjs/pypy|pypy]]                                 | Fork of PyPy with support for compiling to javascript
+| [[https://github.com/pypyjs/pypyjs-release|pypyjs-release]]             | Latest release build of PyPyJS, as a handy git submodule
+| [[https://github.com/pypyjs/pypyjs-release-nojit|pypyjs-release-nojit]] | Latest release build of PyPyJS, without a JIT
+| [[https://github.com/pypyjs/pypyjs-examples|pypyjs-examples]]           | Examples/snippets usage of **pypyjs-release** and **pypyjs-release-nojit**
+| [[https://github.com/pypyjs/pypyjs.github.io|pypyjs.github.io]]         | source for **pypyjs.org** website use **pypyjs-release** and **pypyjs-release-nojit**
+
