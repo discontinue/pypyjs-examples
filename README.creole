@@ -3,7 +3,75 @@
 
 This git repository contains some example usage of PyPy.js
 
-It used the git repro https://github.com/pypyjs/pypyjs-release as a git submodule.
+It used the git repro https://github.com/pypyjs/pypyjs-release (and the no-JIT) as a git submodule.
+
+
+Please fork and contribute own examples/snippets!
+
+
+==== Small snippets:
+
+Here some small snippets for copy&paste into [[http://pypyjs.org/editor.html|PyPyJS-Editor]].
+
+Display some browser information from JavaScript object **navigator**:
+{{{
+import js
+navigator = js.globals["navigator"]
+for js_string in dir(navigator):
+    attr_name = str(js_string) # FIXME
+    attr = getattr(navigator, attr_name, "-")
+    if not isinstance(attr, (js.String, js.Array, js.Boolean)):
+        continue
+    print "%20s: %s" % (attr_name, attr)
+}}}
+
+
+Create html buttons and bind the click event with jQuery:
+{{{
+import js # https://github.com/pypyjs/pypy/tree/pypyjs/pypy/module/js
+
+jquery = js.globals["$"]
+for i in range(10):
+    jquery("#editor").before('<button id="button_%i">Click me %i!</button>' % (i,i))
+
+@js.Function
+def click_handler(event):
+    print "You clicked on button with ID:",
+    print event.target.id
+
+jquery("button").click(click_handler)
+
+print "Please click on new button above!"
+}}}
+
+
+Display information about a //js// object:
+{{{
+from __future__ import print_function
+import js # https://github.com/pypyjs/pypy/tree/pypyjs/pypy/module/js
+
+def pprint_js_object(obj):
+    print("Object:", obj, type(obj), obj.__doc__)
+    print("dir:", dir(obj))
+    print("Existing object attributes:")
+    for attr_name in obj:
+        attr_name = str(attr_name) # convert js.String https://github.com/pypyjs/pypy/issues/2
+        print("%30s:" % attr_name, end="")
+        try:
+            value = getattr(obj, attr_name)
+        except Exception as err:
+            print("[Error: %s]" % err)
+        else:
+            value = str(value) # evaluate js.Handle
+            value = repr(value) # e.g. escape newlines
+            if len(value)>70:
+                value = "%s..." % value[:70]
+            print(value)
+
+window = js.globals.window
+pprint_js_object(window)
+print(" --- END --- ")
+}}}
 
 
 ==== Existing examples:
@@ -63,4 +131,5 @@ More info: http://pypyjs.org/
 | [[https://github.com/pypyjs/pypyjs-release-nojit|pypyjs-release-nojit]] | Latest release build of PyPyJS, without a JIT
 | [[https://github.com/pypyjs/pypyjs-examples|pypyjs-examples]]           | Examples/snippets usage of **pypyjs-release** and **pypyjs-release-nojit**
 | [[https://github.com/pypyjs/pypyjs.github.io|pypyjs.github.io]]         | source for **pypyjs.org** website use **pypyjs-release** and **pypyjs-release-nojit**
+
 
