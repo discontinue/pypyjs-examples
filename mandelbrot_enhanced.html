@@ -134,6 +134,7 @@ $(document).ready(function() {
     }
 
     vm.stdout("loading PyPy.js...");
+    var pseudo_status = setInterval(function(){ vm.stdout("."); }, 500);
     vm.ready.then(function() {
         vm.stdout.reset();
 
@@ -143,7 +144,10 @@ $(document).ready(function() {
             $(".after_load").slideDown("slow");
             vm.stdout("exec...");
             console_exec( data );
+            clearInterval(pseudo_status);
+            vm.stdout("OK\n");
         }).fail(function() {
+            clearInterval(pseudo_status);
             vm.stderr("error!");
         });
     });
