@@ -73,6 +73,22 @@ pprint_js_object(window)
 print(" --- END --- ")
 }}}
 
+Some system information:
+{{{
+import os
+
+methods=(
+    "getlogin", "getuid", "getgid",
+    "getpid", "getpgrp", "getppid",
+    "geteuid", "getegid",
+)
+for method in methods:
+    func = getattr(os, method)
+    doc = func.__doc__.split("\n\n")[-1].strip()
+    result = func()
+    print "%12s: %-10s %s" % (method, result, doc)
+}}}
+
 
 ==== Existing examples:
 
