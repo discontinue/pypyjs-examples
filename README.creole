@@ -74,6 +74,28 @@ print(" --- END --- ")
 }}}
 
 
+Manipulating the virtual file system:
+{{{
+import os
+
+LIB_PATH = "/lib/pypyjs/lib_pypy/"
+
+with open(os.path.join(LIB_PATH, "my_module.py"), "w") as f:
+     f.write("x='hi'")
+
+import my_module
+
+print my_module.x # hi
+print "my_module.__file__:", my_module.__file__ # /lib/pypyjs/lib_pypy/my_module.py
+
+import os
+for filename in os.listdir(LIB_PATH): # Will list my_module.py and my_module.pyc
+    if filename.startswith("my"):
+        filepath = os.path.join(LIB_PATH, filename)
+        print "*", filename, os.stat(filepath)
+}}}
+(Currently there is no public API for manipulating the virtual filesystem, see also: https://github.com/pypyjs/pypyjs/issues/132 )
+
 ==== Existing examples:
 
 ===== Mandelbrot
