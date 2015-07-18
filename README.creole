@@ -90,19 +90,41 @@ for method in methods:
 }}}
 
 
+Manipulating the virtual file system:
+{{{
+import os
+
+LIB_PATH = "/lib/pypyjs/lib_pypy/"
+
+with open(os.path.join(LIB_PATH, "my_module.py"), "w") as f:
+     f.write("x='hi'")
+
+import my_module
+
+print my_module.x # hi
+print "my_module.__file__:", my_module.__file__ # /lib/pypyjs/lib_pypy/my_module.py
+
+import os
+for filename in os.listdir(LIB_PATH): # Will list my_module.py and my_module.pyc
+    if filename.startswith("my"):
+        filepath = os.path.join(LIB_PATH, filename)
+        print "*", filename, os.stat(filepath)
+}}}
+(Currently there is no public API for manipulating the virtual filesystem, see also: https://github.com/pypyjs/pypyjs/issues/132 )
+
 ==== Existing examples:
 
 ===== Mandelbrot
 
 Render Mandelbrot fractal in browser via PyPy.js
 
-* [[https://jedie.github.io/pypyjs-examples/mandelbrot.html|/mandelbrot.html]]
-* [[https://jedie.github.io/pypyjs-examples/mandelbrot-nojit.html|/mandelbrot-nojit.html]] (without PyPy JIT)
+* [[http://pypyjs.org/pypyjs-examples/mandelbrot.html|/mandelbrot.html]]
+* [[http://pypyjs.org/pypyjs-examples/mandelbrot-nojit.html|/mandelbrot-nojit.html]] (without PyPy JIT)
 
 WIP:
 
-* [[https://jedie.github.io/pypyjs-examples/mandelbrot_enhanced.html|/mandelbrot_enhanced.html]]
-* [[https://jedie.github.io/pypyjs-examples/mandelbrot_enhanced-nojit.html|/mandelbrot_enhanced-nojit.html]]
+* [[http://pypyjs.org/pypyjs-examples/mandelbrot_enhanced.html|/mandelbrot_enhanced.html]]
+* [[http://pypyjs.org/pypyjs-examples/mandelbrot_enhanced-nojit.html|/mandelbrot_enhanced-nojit.html]]
 
 
 ===== minimal console
@@ -110,18 +132,18 @@ WIP:
 A minimal console with the aim to use as few external dependencies.
 A full featured console, that used **jq-console** is here: [[http://pypyjs.org|pypyjs.org]]
 
-* [[https://jedie.github.io/pypyjs-examples/minimal_console.html|/minimal_console.html]]
+* [[http://pypyjs.org/pypyjs-examples/minimal_console.html|/minimal_console.html]]
 
 
 ==== try out at home
 
-There is a [[https://jedie.github.io/pypyjs-examples/simple_http_server.py|/simple_http_server.py]] for test this repro at home.
+There is a [[http://pypyjs.org/pypyjs-examples/simple_http_server.py|/simple_http_server.py]] for test this repro at home.
 
 This is needed for 'mandelbrot' example and you can better see file requests.
 
 Just do it e.g.:
 {{{
-~$ git clone https://github.com/jedie/pypyjs-examples.git
+~$ git clone https://github.com/pypyjs/pypyjs-examples.git
 ~$ cd pypyjs-examples
 ~/pypyjs-examples$ git submodule init
 ~/pypyjs-examples$ git submodule update
