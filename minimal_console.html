@@ -1,5 +1,7 @@
 <html>
 <head>
+    <meta content='text/html; charset=utf-8' http-equiv='Content-Type'>
+    <meta charset="utf-8">
     <title>PyPy.js - minimal console</title>
     <style>
     button {
@@ -34,11 +36,11 @@
         code at runtime.
     </p>
 </div>
-<script src="pypyjs-release/lib/Promise.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="pypyjs-release/lib/FunctionPromise.js" type="text/javascript" charset="utf-8"></script>
-<script src="pypyjs-release/lib/pypy.js" type="text/javascript" charset="utf-8"></script>
-<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
-<script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<script src="pypyjs-release/lib/Promise.min.js" type="text/javascript" charset="utf-8" onerror="JavaScript:alert('Error loading file ['+this.src+'] !');"></script>
+<script src="pypyjs-release/lib/FunctionPromise.js" type="text/javascript" charset="utf-8" onerror="JavaScript:alert('Error loading file ['+this.src+'] !');"></script>
+<script src="pypyjs-release/lib/pypyjs.js" type="text/javascript" charset="utf-8" onerror="JavaScript:alert('Error loading file ['+this.src+'] !');"></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js" onerror="JavaScript:alert('Error loading file ['+this.src+'] !');"></script>
+<script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js" onerror="JavaScript:alert('Error loading file ['+this.src+'] !');"></script>
 <script type="text/javascript" charset="utf-8">
 try {
     jQuery(document);
@@ -47,33 +49,30 @@ try {
 }
 function console_exec(code) {
     console.log("exec: '" + code + "'");
-    vm.exec(code).then(function() {
+    pypyjs.exec(code).then(function() {
         console.log("OK");
-        vm.stdout("\n>>> ");
+        pypyjs.stdout("\n>>> ");
     }, function (err) {
         // err is an instance of PyPyJS.Error
         console.log("ERROR: "+err.name+": "+err.message+"!)");
-        vm.stderr(err.trace); // the human-readable traceback, as a string
+        pypyjs.stderr(err.trace); // the human-readable traceback, as a string
     });
 }
 $(document).ready(function() {
-    try {
-       window.vm = new PyPyJS();
-    } catch (e) {
-        alert("Error, pypy.js not loaded!\n Original error was:" + e);
-    }
     out = $("#output");
-    vm.stdout = vm.stderr = function(data) {
+    pypyjs.stdout = pypyjs.stderr = function(data) {
         out.append(data);
     }
-    vm.stdout.reset = vm.stderr.reset = function(data) {
+    pypyjs.stdout.reset = pypyjs.stderr.reset = function(data) {
         out.empty();
     }
 
-    vm.stdout("loading...");
-    vm.ready.then(function() {
-        vm.stdout.reset();
-        vm.stdout('Welcome to PyPy.js!\n');
+    pypyjs.stdout("loading PyPy.js...");
+    var pseudo_status = setInterval(function(){ pypyjs.stdout("."); }, 500);
+    pypyjs.ready().then(function() {
+        clearInterval(pseudo_status);
+        pypyjs.stdout.reset();
+        pypyjs.stdout('Welcome to PyPy.js!\n');
         console_exec("import sys;print sys.version");
 
         window.inputs="";
@@ -81,13 +80,13 @@ $(document).ready(function() {
             console.log("keypress code: " + event.keyCode);
             if (event.keyCode==27) {
                 window.inputs="";
-                vm.stdout.reset();
+                pypyjs.stdout.reset();
             } else if (event.keyCode==13) {
                 console_exec(window.inputs+"\n");
                 window.inputs="";
             } else {
                 window.inputs += event.key;
-                vm.stdout(event.key);
+                pypyjs.stdout(event.key);
             }
         });
     });

@@ -1,5 +1,7 @@
 <html>
 <head>
+    <meta content='text/html; charset=utf-8' http-equiv='Content-Type'>
+    <meta charset="utf-8">
     <title>PyPy.js - Mandelbrot</title>
     <style>
     button {
@@ -32,11 +34,11 @@
         code at runtime.
     </p>
 </div>
-<script src="pypyjs-release/lib/Promise.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="pypyjs-release/lib/FunctionPromise.js" type="text/javascript" charset="utf-8"></script>
-<script src="pypyjs-release/lib/pypy.js" type="text/javascript" charset="utf-8"></script>
-<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
-<script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<script src="pypyjs-release/lib/Promise.min.js" type="text/javascript" charset="utf-8" onerror="JavaScript:alert('Error loading file ['+this.src+'] !');"></script>
+<script src="pypyjs-release/lib/FunctionPromise.js" type="text/javascript" charset="utf-8" onerror="JavaScript:alert('Error loading file ['+this.src+'] !');"></script>
+<script src="pypyjs-release/lib/pypyjs.js" type="text/javascript" charset="utf-8" onerror="JavaScript:alert('Error loading file ['+this.src+'] !');"></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js" onerror="JavaScript:alert('Error loading file ['+this.src+'] !');"></script>
+<script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js" onerror="JavaScript:alert('Error loading file ['+this.src+'] !');"></script>
 <script type="text/javascript" charset="utf-8">
 try {
     jQuery(document);
@@ -44,40 +46,40 @@ try {
     alert("Error, jQuery JS not loaded!\n Original error was:" + e);
 }
 function console_exec(code) {
-    vm.exec(code).then(function() {
+    pypyjs.exec(code).then(function() {
         console.log("OK");
     }, function (err) {
         // err is an instance of PyPyJS.Error
         console.log("ERROR: "+err.name+": "+err.message+"!)");
-        vm.stderr(err.trace); // the human-readable traceback, as a string
+        pypyjs.stderr(err.trace); // the human-readable traceback, as a string
     });
 }
-$(document).ready(function() {
-    try {
-       window.vm = new PyPyJS();
-    } catch (e) {
-        alert("Error, pypy.js not loaded!\n Original error was:" + e);
-    }
+$(function () {
     out = $("#output");
-    vm.stdout = vm.stderr = function(data) {
+    pypyjs.stdout = pypyjs.stderr = function(data) {
         out.append(data);
         out.scrollTop(out.prop("scrollHeight")); // scoll down
     }
-    vm.stdout.reset = vm.stderr.reset = function(data) {
+    pypyjs.stdout.reset = pypyjs.stderr.reset = function(data) {
         out.empty();
     }
 
-    vm.stdout("loading PyPy.js...");
-    vm.ready.then(function() {
-        vm.stdout.reset();
+    // Display a helpful message and twiddle thumbs as it loads.
+    pypyjs.stdout("Loading PyPy.js.\n\n");
+    pypyjs.stdout('It\'s big, so this might take a while...');
+    var pseudo_status = setInterval(function(){ pypyjs.stdout("."); }, 500);
 
-        vm.stdout("load 'mandelbrot.py'...");
+    pypyjs.ready().then(function() {
+        clearInterval(pseudo_status);
+        pypyjs.stdout.reset();
+
+        pypyjs.stdout("load 'mandelbrot.py'...");
         $.get( "mandelbrot.py", function( data ) {
             console_exec( data );
         }).done(function() {
-            vm.stdout("OK\n");
+            pypyjs.stdout("OK\n");
         }).fail(function() {
-            vm.stderr("error!");
+            pypyjs.stderr("error!");
         });
     });
 });
