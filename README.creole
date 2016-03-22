@@ -161,6 +161,11 @@ Little bit longer: PyPy.js is an experiment in building a fast and compliant in-
 More info: http://pypyjs.org/
 
 
+=== Links
+
+* [[http://salvatore.diodev.fr/pypybox|PyPyBox]] - create 2D graphics in pure Python
+
+
 === Repository Overview
 
 | [[https://github.com/pypyjs/pypyjs|pypyjs]]                             | Main repository to built a PyPyJS release
