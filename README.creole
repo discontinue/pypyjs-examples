@@ -1,6 +1,8 @@
 
 === PyPy.js examples
 
+**Note:** Development is sleeping at the moment. Discuss this here: https://github.com/pypyjs/pypyjs/issues/213
+
 This git repository contains some example usage of PyPy.js
 
 It used the git repro https://github.com/pypyjs/pypyjs-release (and the no-JIT) as a git submodule.
